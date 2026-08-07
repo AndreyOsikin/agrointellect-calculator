@@ -657,8 +657,14 @@
           <label class="field"><span>Менеджер</span><input id="managerName" type="text" placeholder="ФИО менеджера"></label>
           <label class="field"><span>Количество площадок</span><input id="siteCount" type="number" min="1" max="30" value="1"><small>Карточки площадок добавятся автоматически</small></label>
           <label class="field"><span>Сотрудников для обучения</span><input id="trainingPeople" type="number" min="0" value="0"></label>
-          <label class="field"><span>Подключается ли «Учёт молока»</span><select id="milkAccounting"></select></label>
-          <label class="field"><span>Требуется нестандартная интеграция</span><select id="customIntegration"></select></label>
+          <label class="field switch-field option-switch">
+            <span><b>Подключить «Учёт молока»</b><small>Лицензия рассчитывается по поголовью каждой площадки</small></span>
+            <input id="milkAccounting" type="checkbox"><i></i>
+          </label>
+          <label class="field switch-field option-switch">
+            <span><b>Требуется нестандартная интеграция</b><small>Стоимость согласовывается после оценки объёма работ</small></span>
+            <input id="customIntegration" type="checkbox"><i></i>
+          </label>
           <label class="field span-2"><span>Дополнительные часы программиста</span><input id="devHours" type="number" min="0" step="0.5" value="0"></label>
         </div>
       </section>
@@ -787,7 +793,7 @@
         <label class="field"><span>Система управления стадом</span><select class="herd-system"></select></label>
         <label class="field"><span>Система управления кормлением</span><select class="feed-system"></select></label>
         <label class="field"><span>Доильное оборудование</span><select class="milking-system"></select></label>
-        <label class="field"><span>Доильный зал интегрирован с СУС</span><select class="parlor-integrated"></select></label>
+        <label class="field switch-field option-switch"><span><b>Доильный зал интегрирован с СУС</b><small>Включите, если данные передаются автоматически</small></span><input class="parlor-integrated" type="checkbox"><i></i></label>
       </div>
     </article>
   </template>
@@ -852,6 +858,7 @@
   <script>
 const API_URL='https://script.google.com/macros/s/AKfycbxXueQp9gjFOlpN4u5VyCmZoUV8LDE9o5HAL9RkCBUNkaaO67G8ccVwHOCGDmPusvEK/exec';
 const DEFAULTS={yesNo:['Нет','Да'],clientTypes:['Обычный клиент','Мустанг'],periods:[1,6,12],herd:['отсутствует','Мусофт','Afifarm','Alpro','DairyComp','DairyPlan','DataFlow','DelPro','Uniform'],feed:['отсутствует','DTM','FeedNet','Kepler','TMR Export'],milking:['отсутствует','Afimilk','BouMatic','DeLaval','GEA'],termDiscounts:{1:0,6:10,12:20},licenseRules:{online:[{min:1,max:100,price:25000},{min:101,max:500,price:32000},{min:501,max:1000,price:40000},{min:1001,max:1500,price:55000},{min:1501,max:2000,price:70000},{min:2001,max:999999,price:85000}],musoft:[{min:1,max:100,price:6250},{min:101,max:500,price:18000},{min:501,max:1000,price:25000},{min:1001,max:1500,price:32000},{min:1501,max:2000,price:40000},{min:2001,max:999999,price:50000}],milk:[{min:1,max:100,price:2000},{min:101,max:500,price:4000},{min:501,max:1000,price:6000},{min:1001,max:1500,price:8000},{min:1501,max:2000,price:10000},{min:2001,max:999999,price:12000}]},integrationCosts:{DairyComp:5000,DairyPlan:5000,DataFlow:4000,DelPro:4000,Uniform:4000,Afifarm:4000,Мусофт:2000,DTM:2550,FeedNet:2550,Kepler:2550,'TMR Export':3400,DeLaval:2550,GEA:2550,BouMatic:2550,Afimilk:2550},baseConnection:25000,trainingPerPerson:2500,devHour:1700};
+DEFAULTS.clientTypes=DEFAULTS.clientTypes.map(x=>x==='Обычный клиент'?'Клиент':x);
 let data=structuredClone(DEFAULTS);data.clientDiscounts={Мустанг:40};
 
 const SUPPORT_TARIFFS=[
@@ -877,7 +884,7 @@ function parseApi(payload){
   data.herd=unique(refs.herdSystems||[]);
   data.feed=unique(refs.feedSystems||[]);
   data.milking=unique(refs.milkingSystems||[]);
-  data.clientTypes=unique(refs.clientTypes||[]);
+  data.clientTypes=unique(refs.clientTypes||[]).map(x=>x==='Обычный клиент'?'Клиент':x);
   data.periods=(refs.licensePeriods||[]).map(parseNum).filter(Boolean);
 
   // Защита: если конкретный список пуст, используем только резервный список,
@@ -1008,9 +1015,9 @@ function parseApi(payload){
   }
 }
 async function loadApi(){const state=$('#apiState');state.classList.add('loading');state.querySelector('span:last-child').textContent='Загрузка данных…';try{const apiRequestUrl=API_URL+(API_URL.includes('?')?'&':'?')+'_ts='+Date.now();const res=await fetch(apiRequestUrl,{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);const payload=await res.json();if(!payload.success)throw new Error(payload.error||'API error');parseApi(payload);state.classList.remove('loading','error');state.classList.add('ok');const d=new Date(payload.updatedAt||Date.now());state.querySelector('span:last-child').textContent='Данные API · v22 · '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});}catch(e){state.classList.remove('loading','ok');state.classList.add('error');state.querySelector('span:last-child').textContent='Используется резервная база';console.warn(e)}finally{renderBase();syncSites();calculate()}}
-function renderBase(){fillSelect($('#milkAccounting'),['Нет','Да'],$('#milkAccounting').value||'Нет');fillSelect($('#customIntegration'),['Нет','Да'],$('#customIntegration').value||'Нет');fillSelect($('#clientType'),data.clientTypes,$('#clientType').value);fillSelect($('#licensePeriod'),data.periods,$('#licensePeriod').value||1)}
-function createSite(index,seed={}){const frag=$('#siteTemplate').content.cloneNode(true),card=frag.querySelector('.site-card');card.dataset.index=index;card.querySelector('.site-index').textContent=String(index+1).padStart(2,'0');card.querySelector('h3').textContent=`Площадка №${index+1}`;card.querySelector('.site-name').value=seed.name||'';card.querySelector('.site-headcount').value=Number(seed.headcount)>0?seed.headcount:'';fillSelect(card.querySelector('.herd-system'),data.herd,seed.herd);fillSelect(card.querySelector('.feed-system'),data.feed,seed.feed);fillSelect(card.querySelector('.milking-system'),data.milking,seed.milking);fillSelect(card.querySelector('.parlor-integrated'),['Нет','Да'],seed.integrated||'Нет');card.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calculate));return frag}
-function getSites(){return [...document.querySelectorAll('.site-card')].map(c=>({name:c.querySelector('.site-name').value.trim(),headcount:+c.querySelector('.site-headcount').value||0,herd:c.querySelector('.herd-system').value,feed:c.querySelector('.feed-system').value,milking:c.querySelector('.milking-system').value,integrated:c.querySelector('.parlor-integrated').value}))}
+function renderBase(){fillSelect($('#clientType'),data.clientTypes,$('#clientType').value);fillSelect($('#licensePeriod'),data.periods,$('#licensePeriod').value||1)}
+function createSite(index,seed={}){const frag=$('#siteTemplate').content.cloneNode(true),card=frag.querySelector('.site-card');card.dataset.index=index;card.querySelector('.site-index').textContent=String(index+1).padStart(2,'0');card.querySelector('h3').textContent=`Площадка №${index+1}`;card.querySelector('.site-name').value=seed.name||'';card.querySelector('.site-headcount').value=Number(seed.headcount)>0?seed.headcount:'';fillSelect(card.querySelector('.herd-system'),data.herd,seed.herd);fillSelect(card.querySelector('.feed-system'),data.feed,seed.feed);fillSelect(card.querySelector('.milking-system'),data.milking,seed.milking);card.querySelector('.parlor-integrated').checked=seed.integrated==='Да'||seed.integrated===true;card.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calculate));return frag}
+function getSites(){return [...document.querySelectorAll('.site-card')].map(c=>({name:c.querySelector('.site-name').value.trim(),headcount:+c.querySelector('.site-headcount').value||0,herd:c.querySelector('.herd-system').value,feed:c.querySelector('.feed-system').value,milking:c.querySelector('.milking-system').value,integrated:c.querySelector('.parlor-integrated').checked?'Да':'Нет'}))}
 function syncSites(){const target=Math.max(1,Math.min(30,+$('#siteCount').value||1));$('#siteCount').value=target;const saved=getSites();const box=$('#sites');box.innerHTML='';for(let i=0;i<target;i++)box.append(createSite(i,saved[i]||{}));calculate()}
 function priceFor(product,headcount){if(!(Number(headcount)>0))return 0;const rules=(data.licenseRules[product]||[]).sort((a,b)=>a.min-b.min);return (rules.find(r=>headcount>=r.min&&headcount<=r.max)||rules.at(-1)||{price:0}).price}
 
@@ -1049,14 +1056,14 @@ function calculate(){
     else details.push({name:`Онлайн‑ферма — ${s.name}`,value:0,note:'бесплатная площадка по правилу обычного клиента'});
 
     if($('#musoftLicense').checked){const p=priceFor('musoft',s.headcount);musoftMonthly+=p;details.push({name:`Musoft — ${s.name} (${period} мес.)`,value:p*period})}
-    if($('#milkAccounting').value==='Да'){const p=priceFor('milk',s.headcount);milkMonthly+=p;details.push({name:`Учёт молока — ${s.name} (${period} мес.)`,value:p*period})}
+    if($('#milkAccounting').checked){const p=priceFor('milk',s.headcount);milkMonthly+=p;details.push({name:`Учёт молока — ${s.name} (${period} мес.)`,value:p*period})}
     [s.herd,s.feed,s.milking].forEach(sys=>{if(sys&&sys!=='отсутствует'&&sys!=='другое'){const v=data.integrationCosts[sys]||0;connection+=v;details.push({name:`Интеграция ${sys}`,value:v})}});
   });
 
   const training=(+$('#trainingPeople').value||0)*data.trainingPerPerson,dev=(+$('#devHours').value||0)*data.devHour;
   if(hasConfiguredSite&&training){connection+=training;details.push({name:'Обучение сотрудников',value:training})}
   if(hasConfiguredSite&&dev){connection+=dev;details.push({name:'Дополнительные часы программиста',value:dev})}
-  if(hasConfiguredSite&&$('#customIntegration').value==='Да')details.push({name:'Нестандартная интеграция',value:0,note:'рассчитывается индивидуально'});
+  if(hasConfiguredSite&&$('#customIntegration').checked)details.push({name:'Нестандартная интеграция',value:0,note:'рассчитывается индивидуально'});
 
   const onlineMonthly=isMustang?onlineMonthlyGross:onlineMonthlyPayable;
   const onlinePeriod=onlineMonthly*period,musoftPeriod=musoftMonthly*period,milkPeriod=milkMonthly*period;
@@ -1098,7 +1105,7 @@ function calculate(){
 
   $('#regularOnlineRow').classList.remove('hidden');
   $('#musoftRow').classList.toggle('hidden',!$('#musoftLicense').checked);
-  $('#milkRow').classList.toggle('hidden',$('#milkAccounting').value!=='Да');
+  $('#milkRow').classList.toggle('hidden',!$('#milkAccounting').checked);
   $('#termDiscountRow').classList.toggle('hidden',!isMustang||termDiscount<=0);
   $('#mustangDiscountRow').classList.toggle('hidden',!isMustang);
 
@@ -1134,7 +1141,7 @@ function validateCalculation(show=true){
 }
 function resetCalculator(){
   if(!confirm('Сбросить все введённые данные?'))return;
-  $('#clientName').value='';$('#managerName').value='';$('#siteCount').value=1;$('#trainingPeople').value=0;$('#devHours').value=0;$('#milkAccounting').value='Нет';$('#customIntegration').value='Нет';$('#clientType').value=data.clientTypes[0]||'Обычный клиент';$('#licensePeriod').value=data.periods[0]||1;$('#musoftLicense').checked=false;document.querySelector('input[name="supportRequired"][value="no"]').checked=true;selectedSupportTariff=null;$('#sites').innerHTML='';syncSupportUI();syncSites();document.querySelectorAll('.field.is-invalid').forEach(x=>x.classList.remove('is-invalid'));$('#validationBanner').classList.remove('show');toast('Расчёт сброшен');
+  $('#clientName').value='';$('#managerName').value='';$('#siteCount').value=1;$('#trainingPeople').value=0;$('#devHours').value=0;$('#milkAccounting').checked=false;$('#customIntegration').checked=false;$('#clientType').value=data.clientTypes[0]||'Клиент';$('#licensePeriod').value=data.periods[0]||1;$('#musoftLicense').checked=false;document.querySelector('input[name="supportRequired"][value="no"]').checked=true;selectedSupportTariff=null;$('#sites').innerHTML='';syncSupportUI();syncSites();document.querySelectorAll('.field.is-invalid').forEach(x=>x.classList.remove('is-invalid'));$('#validationBanner').classList.remove('show');toast('Расчёт сброшен');
 }
 function resultText(){
   const r=window.currentResult;
@@ -1288,7 +1295,89 @@ $('#siteCount').addEventListener('input',syncSites);document.querySelectorAll('i
         {text:'Подключение и запуск оплачиваются один раз. Лицензии и выбранное сопровождение рассчитаны за выбранный период. Скидки применяются только к лицензиям и не распространяются на сопровождение. Расчёт является предварительным и не является публичной офертой; окончательные условия фиксируются в договоре.',fontSize:7,color:'#7B8798',lineHeight:1.4,margin:[0,14,0,0]}
       ]
     };
-    const pdf=pdfMake.createPdf(doc);
+    const premiumSection=(number,title,caption='')=>({
+      table:{widths:[34,'*'],body:[[
+        {text:number,bold:true,fontSize:10,color:'#FFFFFF',alignment:'center',fillColor:'#0A73DE',margin:[0,8,0,8]},
+        {stack:[{text:title,bold:true,fontSize:11,color:'#182230'},{text:caption,fontSize:7.5,color:'#7B8798',margin:[0,2,0,0]}],fillColor:'#F1F6FC',margin:[11,6,10,6]}
+      ]]},layout:'noBorders',margin:[0,15,0,8]
+    });
+    const premiumInfo=(label,value,tone='#F5F8FC')=>({
+      stack:[{text:label.toUpperCase(),fontSize:6.5,bold:true,color:'#8190A5',characterSpacing:.7},{text:value||'Не указан',fontSize:10.5,bold:true,color:'#182230',margin:[0,4,0,0]}],
+      fillColor:tone,margin:[12,10,12,10]
+    });
+    const premiumHeadcount=r.sites.reduce((sum,site)=>sum+(Number(site.headcount)||0),0);
+    const premiumSitesWord=r.sites.length===1?'площадка':(r.sites.length>=2&&r.sites.length<=4?'площадки':'площадок');
+    const productRows=[];
+    for(let i=0;i<products.length;i+=2){
+      productRows.push([0,1].map(offset=>{
+        const item=products[i+offset];
+        return item?{stack:[{text:item.name,bold:true,fontSize:9.5,color:'#0A69CC'},{text:item.text,fontSize:7.5,color:'#6B778A',lineHeight:1.3,margin:[0,4,0,0]}],fillColor:offset?'#F1FAF7':'#F2F7FE',margin:[11,9,11,9]}:{text:'',fillColor:'#FFFFFF'};
+      }));
+    }
+    const premiumSupport=(r.supportPeriod&&r.supportTariff)?[
+      premiumSection('04','Сопровождение','Выбранный формат регулярной работы'),
+      {table:{widths:['*',145],body:[[
+        {stack:[{text:r.supportTariff.name,bold:true,fontSize:16,color:'#0A69CC'},{text:r.supportTariff.description,fontSize:8.5,color:'#66758A',lineHeight:1.35,margin:[0,5,0,9]},{ul:r.supportTariff.features.map(x=>({text:x,fontSize:8,color:'#314158'})),margin:[0,0,0,0]}],fillColor:'#F2F7FE',margin:[14,13,14,13]},
+        {stack:[{text:'РЕГУЛЯРНЫЙ ПЛАТЁЖ',fontSize:6.5,bold:true,color:'#6E819A',alignment:'right',characterSpacing:.6},{text:money(r.supportMonthly),fontSize:17,bold:true,color:'#182230',alignment:'right',margin:[0,5,0,0]},{text:'в месяц',fontSize:7.5,color:'#6E819A',alignment:'right',margin:[0,2,0,10]},{text:money(r.supportPeriod),fontSize:11,bold:true,color:'#16815B',alignment:'right'},{text:'за выбранный период',fontSize:7,color:'#6E819A',alignment:'right',margin:[0,2,0,0]}],fillColor:'#EAF7F2',margin:[12,13,12,13]}
+      ]]},layout:'noBorders',margin:[0,0,0,4]}
+    ]:[];
+    const premiumDoc={
+      pageSize:'A4',pageMargins:[34,30,34,34],
+      background:()=>({canvas:[{type:'rect',x:0,y:0,w:595,h:842,color:'#F4F7FB'},{type:'rect',x:0,y:0,w:595,h:11,color:'#0875DF'}]}),
+      footer:(current,count)=>({columns:[{text:'АГРОИНТЕЛЛЕКТ  •  ОНЛАЙН-ФЕРМА',color:'#8C99AA',fontSize:6.5,bold:true,characterSpacing:.7},{text:`СТРАНИЦА ${current} ИЗ ${count}`,alignment:'right',color:'#8C99AA',fontSize:6.5,bold:true}],margin:[34,0,34,14]}),
+      defaultStyle:{font:'Roboto',fontSize:9,color:'#263448'},
+      styles:{
+        premiumKicker:{fontSize:7,bold:true,color:'#0A73DE',characterSpacing:1.2},
+        premiumTitle:{fontSize:23,bold:true,color:'#172033',lineHeight:1.04},
+        premiumSubtitle:{fontSize:8.5,color:'#66758A',lineHeight:1.35},
+        premiumTableHeader:{fontSize:7,bold:true,color:'#687990',fillColor:'#EAF1F9',characterSpacing:.4}
+      },
+      content:[
+        {table:{widths:['*',176],body:[[
+          {image:logo,width:118,margin:[0,2,0,0]},
+          {stack:[{text:'РАСЧЁТ СТОИМОСТИ',style:'premiumKicker',alignment:'right'},{text:`№ ${number}`,bold:true,fontSize:10,color:'#172033',alignment:'right',margin:[0,5,0,0]},{text:`от ${now.toLocaleDateString('ru-RU')}`,fontSize:7.5,color:'#7B8798',alignment:'right',margin:[0,3,0,0]}],fillColor:'#EAF2FC',margin:[12,10,12,10]}
+        ]]},layout:'noBorders',margin:[0,0,0,13]},
+        {table:{widths:['*',188],body:[[
+          {stack:[{text:'ПЕРСОНАЛЬНЫЙ РАСЧЁТ',style:'premiumKicker'},{text:'Подключение\n«Агроинтеллект. Онлайн-ферма»',style:'premiumTitle',margin:[0,7,0,6]},{text:'Лицензии, интеграции и сопровождение для выбранной конфигурации хозяйства.',style:'premiumSubtitle'}],fillColor:'#FFFFFF',margin:[16,15,16,15]},
+          {stack:[{text:'ИТОГО К ОПЛАТЕ',fontSize:7,bold:true,color:'#CFE5FF',characterSpacing:.8},{text:money(r.total),fontSize:26,bold:true,color:'#FFFFFF',margin:[0,7,0,4]},{text:`Разово: ${money(r.connection)}`,fontSize:7.5,color:'#E1EEFF'},{text:`Регулярно: ${money(r.recurringMonthly)}/мес.`,fontSize:7.5,bold:true,color:'#FFFFFF',margin:[0,3,0,0]}],fillColor:'#0875DF',margin:[15,17,15,16]}
+        ]]},layout:'noBorders',margin:[0,0,0,7]},
+        {table:{widths:['*','*'],body:[
+          [premiumInfo('Клиент',$('#clientName').value,'#FFFFFF'),premiumInfo('Менеджер',$('#managerName').value,'#F1F6FC')],
+          [premiumInfo('Тип клиента',r.type,'#F1F6FC'),premiumInfo('Период лицензии',r.period+' мес.','#FFFFFF')]
+        ]},layout:{hLineColor:()=> '#E0E8F2',vLineColor:()=> '#E0E8F2',paddingLeft:()=>0,paddingRight:()=>5,paddingTop:()=>0,paddingBottom:()=>5}},
+
+        premiumSection('01','Конфигурация хозяйства',`${r.sites.length} ${premiumSitesWord} • ${new Intl.NumberFormat('ru-RU').format(premiumHeadcount)} голов`),
+        ...siteContent,
+
+        premiumSection('02','Продукты и услуги','Что входит в выбранную конфигурацию'),
+        {table:{widths:['*','*'],body:productRows},layout:{hLineColor:()=> '#DDE7F2',vLineColor:()=> '#DDE7F2',paddingLeft:()=>0,paddingRight:()=>6,paddingTop:()=>0,paddingBottom:()=>6}},
+
+        premiumSection('03','Стоимость','Подробная расшифровка расчёта'),
+        {table:{headerRows:1,widths:['*',112],body:[
+          [{text:'СОСТАВ РАСЧЁТА',style:'premiumTableHeader'},{text:'СТОИМОСТЬ',style:'premiumTableHeader',alignment:'right'}],
+          ...rows.map(([name,value])=>{
+            const discount=name.startsWith('Скидка');
+            const subtotal=name.startsWith('Лицензии с')||name.startsWith('Лицензии за выбранный');
+            return [{text:name,bold:subtotal,fontSize:8.5,color:discount?'#16815B':'#2A394D',fillColor:subtotal?'#F0F7FF':'#FFFFFF'},{text:value,bold:true,fontSize:8.5,alignment:'right',color:discount?'#16815B':'#172033',fillColor:subtotal?'#F0F7FF':'#FFFFFF'}];
+          })
+        ]},layout:{hLineColor:()=> '#E1E8F1',vLineWidth:()=>0,paddingLeft:()=>10,paddingRight:()=>10,paddingTop:()=>7,paddingBottom:()=>7}},
+        {table:{widths:['*',205],body:[[
+          {stack:[{text:'ИТОГОВАЯ СТОИМОСТЬ',fontSize:7,bold:true,color:'#D6E9FF',characterSpacing:.8},{text:money(r.total),fontSize:25,bold:true,color:'#FFFFFF',margin:[0,6,0,0]}],fillColor:'#0875DF',margin:[15,13,15,13]},
+          {stack:[{text:`Экономия: ${money(r.termDiscount+r.mustangDiscount)}`,fontSize:8,color:'#DDEBFF',alignment:'right'},{text:`Регулярно далее: ${money(r.recurringMonthly)}/мес.`,fontSize:9,bold:true,color:'#FFFFFF',alignment:'right',margin:[0,5,0,0]},{text:r.supportMonthly?`Сопровождение включено: ${money(r.supportMonthly)}/мес.`:'Подключение оплачивается один раз',fontSize:7,color:'#DDEBFF',alignment:'right',margin:[0,4,0,0]}],fillColor:'#0865C5',margin:[14,15,14,13]}
+        ]]},layout:'noBorders',margin:[0,9,0,0]},
+
+        ...premiumSupport,
+        premiumSection(r.supportPeriod?'05':'04','Порядок запуска','От согласования до начала регулярной работы'),
+        {table:{widths:['*','*'],body:[[
+          {stack:[{text:'01',fontSize:8,bold:true,color:'#0A73DE'},{text:'Согласование конфигурации и условий',fontSize:8.5,bold:true,color:'#263448',margin:[0,5,0,0]}],fillColor:'#F1F6FC',margin:[11,10,11,10]},
+          {stack:[{text:'02',fontSize:8,bold:true,color:'#0A73DE'},{text:'Подключение источников данных и интеграций',fontSize:8.5,bold:true,color:'#263448',margin:[0,5,0,0]}],fillColor:'#F1F6FC',margin:[11,10,11,10]}],[
+          {stack:[{text:'03',fontSize:8,bold:true,color:'#16815B'},{text:'Настройка, обучение и проверка данных',fontSize:8.5,bold:true,color:'#263448',margin:[0,5,0,0]}],fillColor:'#EEF9F5',margin:[11,10,11,10]},
+          {stack:[{text:'04',fontSize:8,bold:true,color:'#16815B'},{text:'Запуск и переход к регулярной работе',fontSize:8.5,bold:true,color:'#263448',margin:[0,5,0,0]}],fillColor:'#EEF9F5',margin:[11,10,11,10]}
+        ]]},layout:{hLineColor:()=> '#DCE6F1',vLineColor:()=> '#DCE6F1',paddingLeft:()=>0,paddingRight:()=>6,paddingTop:()=>0,paddingBottom:()=>6}},
+        {table:{widths:['*'],body:[[{text:'Расчёт является предварительным и не является публичной офертой. Подключение оплачивается один раз. Лицензии и сопровождение рассчитаны за выбранный период. Скидки применяются только к лицензиям. Окончательные условия фиксируются в договоре.',fontSize:7,color:'#748298',lineHeight:1.4,fillColor:'#EAF1F8',margin:[12,10,12,10]}]]},layout:'noBorders',margin:[0,10,0,0]}
+      ]
+    };
+    const pdf=pdfMake.createPdf(premiumDoc);
     if(mode==='share'){
       pdf.getBlob(async blob=>{
         try{
@@ -1758,6 +1847,51 @@ $('#printResult').onclick=()=>downloadPdf('download');$('#shareResult').onclick=
     .field>span,.field.span-2>span{min-height:0!important;align-items:flex-start!important}
     .field>input,.field>.modern-select,.field>.site-count-stepper{height:54px!important;min-height:54px!important}
     .form-section:before{top:18px;bottom:18px;width:3px}
+  }
+</style>
+<style id="v30-unified-switches">
+  .field.switch-field{
+    display:flex!important;grid-template:none!important;align-items:center!important;justify-content:space-between!important;
+    gap:18px!important;min-height:82px!important;height:auto!important;padding:14px 16px!important;
+    border:1px solid rgba(164,187,215,.55)!important;border-radius:16px!important;
+    background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(242,247,253,.9))!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 5px 14px rgba(38,72,110,.04)!important;
+    cursor:pointer!important;transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease,background .2s ease!important;
+  }
+  .field.switch-field:hover{
+    border-color:rgba(0,113,227,.38)!important;background:#fff!important;
+    box-shadow:0 10px 24px rgba(20,83,150,.09)!important;transform:translateY(-1px)!important;
+  }
+  .field.switch-field>span{
+    display:grid!important;align-items:start!important;gap:4px!important;min-height:0!important;height:auto!important;
+    margin:0!important;padding:0!important;flex:1 1 auto!important;
+  }
+  .field.switch-field b{font-size:14px!important;line-height:1.3!important;color:#2B3748!important;letter-spacing:-.01em!important}
+  .field.switch-field small{min-height:0!important;margin:0!important;padding:0!important;font-size:11.5px!important;line-height:1.35!important;color:#8A96A7!important}
+  .field.switch-field input{display:none!important}
+  .field.switch-field i{
+    position:relative!important;display:block!important;flex:0 0 52px!important;width:52px!important;height:30px!important;
+    border-radius:999px!important;background:#C8D1DC!important;box-shadow:inset 0 0 0 1px rgba(30,50,72,.05)!important;
+    transition:background .22s ease,box-shadow .22s ease!important;
+  }
+  .field.switch-field i:after{
+    content:""!important;position:absolute!important;left:3px!important;top:3px!important;width:24px!important;height:24px!important;
+    border-radius:50%!important;background:#fff!important;box-shadow:0 3px 9px rgba(24,45,70,.24)!important;
+    transform:none!important;transition:transform .24s cubic-bezier(.2,.8,.2,1)!important;
+  }
+  .field.switch-field input:checked+i{
+    background:linear-gradient(135deg,#1688F0,#0868CF)!important;
+    box-shadow:0 6px 15px rgba(0,105,210,.22),inset 0 0 0 1px rgba(0,79,167,.12)!important;
+  }
+  .field.switch-field input:checked+i:after{transform:translateX(22px)!important}
+  .field.switch-field:focus-within{border-color:#0877E8!important;box-shadow:0 0 0 4px rgba(0,113,227,.12)!important}
+  .site-fields .field.switch-field{min-height:82px!important}
+  @media(max-width:640px){
+    .field.switch-field{min-height:78px!important;padding:13px 14px!important;gap:13px!important}
+    .field.switch-field b{font-size:13.5px!important}.field.switch-field small{font-size:11px!important}
+    .field.switch-field i{flex-basis:48px!important;width:48px!important;height:28px!important}
+    .field.switch-field i:after{width:22px!important;height:22px!important}
+    .field.switch-field input:checked+i:after{transform:translateX(20px)!important}
   }
 </style>
 </body>

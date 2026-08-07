@@ -1486,7 +1486,104 @@ $('#siteCount').addEventListener('input',syncSites);document.querySelectorAll('i
         {text:'Расчёт является предварительным и не является публичной офертой. Окончательные условия, состав работ и сроки фиксируются в договоре.',fontSize:6.3,color:'#8996A8',lineHeight:1.35,margin:[0,9,0,0]}
       ]
     };
-    const pdf=pdfMake.createPdf(salesDoc);
+    const clearBlue='#79BEF3',clearBlueSoft='#EAF6FF',clearBlueLine='#C8E4F8',clearInk='#172033',clearMuted='#63738A';
+    const clearSection=(number,title,caption='')=>({
+      table:{widths:[38,'*'],body:[[
+        {text:number,fontSize:10,bold:true,color:'#FFFFFF',alignment:'center',fillColor:clearBlue,margin:[0,9,0,9]},
+        {stack:[{text:title,fontSize:14,bold:true,color:clearInk},{text:caption,fontSize:8,color:clearMuted,margin:[0,3,0,0]}],fillColor:clearBlueSoft,margin:[12,7,12,7]}
+      ]]},layout:'noBorders',margin:[0,16,0,9]
+    });
+    const clearProducts=[
+      {name:'Онлайн-ферма',description:`Лицензия для ${r.sites.length} ${premiumSitesWord} на ${r.period} мес.`,price:money(r.onlineMonthly)+'/мес.'},
+      ...(r.musoft?[{name:'Musoft',description:`Лицензия на ${r.period} мес.`,price:money(r.musoftMonthly)+'/мес.'}]:[]),
+      ...(r.milk?[{name:'Учёт молока',description:`Лицензия на ${r.period} мес.`,price:money(r.milkMonthly)+'/мес.'}]:[]),
+      ...(r.supportPeriod?[{name:`Сопровождение «${r.supportTariff.name}»`,description:r.supportTariff.description,price:money(r.supportMonthly)+'/мес.'}]:[]),
+      ...($('#customIntegration').checked?[{name:'Нестандартная интеграция',description:'Требуется предварительная оценка объёма работ.',price:'индивидуально'}]:[])
+    ];
+    const clearProductRows=clearProducts.map((item,index)=>[
+      {stack:[{text:item.name,fontSize:9.5,bold:true,color:'#155D91'},{text:item.description,fontSize:7.7,color:clearMuted,lineHeight:1.35,margin:[0,4,0,0]}],fillColor:index%2? '#F7FBFE':clearBlueSoft,margin:[12,9,12,9]},
+      {text:item.price,fontSize:9.5,bold:true,color:clearInk,alignment:'right',fillColor:index%2?'#F7FBFE':clearBlueSoft,margin:[10,14,12,10]}
+    ]);
+    const clearSiteRows=r.sites.map((site,index)=>[
+      {stack:[
+        {text:`ПЛОЩАДКА ${String(index+1).padStart(2,'0')}`,fontSize:6.5,bold:true,color:'#4D8DBA',characterSpacing:.65},
+        {text:site.name||`Площадка №${index+1}`,fontSize:10.5,bold:true,color:clearInk,margin:[0,5,0,0]},
+        {text:`Система управления стадом: ${site.herd||'не выбрана'}\nСистема кормления: ${site.feed||'не выбрана'}\nДоильное оборудование: ${site.milking||'не выбрано'}`,fontSize:7.7,color:clearMuted,lineHeight:1.45,margin:[0,5,0,0]}
+      ],fillColor:'#F7FBFE',margin:[12,10,12,10]},
+      {stack:[{text:`${new Intl.NumberFormat('ru-RU').format(site.headcount)} голов`,fontSize:11,bold:true,color:'#155D91',alignment:'right'},{text:site.integrated==='Да'?'Доильный зал интегрирован с СУС':'Без интеграции доильного зала с СУС',fontSize:7.2,color:clearMuted,alignment:'right',lineHeight:1.3,margin:[0,6,0,0]}],fillColor:'#F7FBFE',margin:[12,12,12,10]}
+    ]);
+    const clearSupport=r.supportPeriod&&r.supportTariff?[
+      {text:'',pageBreak:'before'},
+      {columns:[{image:standardLogo,width:105},{stack:[{text:'СОПРОВОЖДЕНИЕ И ЗАПУСК',fontSize:7,bold:true,color:'#4D8DBA',alignment:'right',characterSpacing:.7},{text:`Расчёт № ${number}`,fontSize:8.5,bold:true,color:clearInk,alignment:'right',margin:[0,4,0,0]}],margin:[0,10,0,0]}],margin:[0,0,0,12]},
+      clearSection('04','Сопровождение','Что входит в выбранный формат регулярной работы.'),
+      {table:{widths:['*',155],body:[[
+        {stack:[{text:r.supportTariff.name,fontSize:15,bold:true,color:'#155D91'},{text:r.supportTariff.description,fontSize:8.2,color:clearMuted,lineHeight:1.4,margin:[0,6,0,8]},{ul:r.supportTariff.features.map(x=>({text:x,fontSize:7.8,color:'#34445A'})),margin:[0,0,0,0]}],fillColor:clearBlueSoft,margin:[14,12,14,12]},
+        {stack:[{text:'СТОИМОСТЬ',fontSize:6.5,bold:true,color:'#4D8DBA',alignment:'right',characterSpacing:.7},{text:money(r.supportMonthly),fontSize:17,bold:true,color:clearInk,alignment:'right',margin:[0,8,0,0]},{text:'в месяц',fontSize:7.5,color:clearMuted,alignment:'right',margin:[0,2,0,9]},{text:money(r.supportPeriod),fontSize:10,bold:true,color:'#155D91',alignment:'right'},{text:`за ${r.period} мес.`,fontSize:7,color:clearMuted,alignment:'right',margin:[0,2,0,0]}],fillColor:'#F6FBFF',margin:[12,14,12,12]}
+      ]]},layout:{hLineColor:()=>clearBlueLine,vLineColor:()=>clearBlueLine,paddingLeft:()=>0,paddingRight:()=>0,paddingTop:()=>0,paddingBottom:()=>0}}
+    ]:[];
+    const clearDoc={
+      pageSize:'A4',pageMargins:[42,34,42,40],
+      background:()=>({canvas:[{type:'rect',x:0,y:0,w:595,h:842,color:'#FFFFFF'},{type:'rect',x:0,y:0,w:595,h:8,color:clearBlue}]}),
+      footer:(current,count)=>({columns:[{text:'АГРОИНТЕЛЛЕКТ  •  РАСЧЁТ СТОИМОСТИ ПОДКЛЮЧЕНИЯ',fontSize:6.2,bold:true,color:'#91A0B4',characterSpacing:.5},{text:`${current} / ${count}`,fontSize:6.2,bold:true,color:'#91A0B4',alignment:'right'}],margin:[42,0,42,15]}),
+      defaultStyle:{font:'Roboto',fontSize:9,color:clearInk},
+      content:[
+        {columns:[
+          {image:standardLogo,width:124},
+          {stack:[{text:'РАСЧЁТ СТОИМОСТИ ПОДКЛЮЧЕНИЯ',fontSize:6.5,bold:true,color:'#4D8DBA',alignment:'right',characterSpacing:.75},{text:`№ ${number}`,fontSize:10,bold:true,color:clearInk,alignment:'right',margin:[0,5,0,0]},{text:`от ${now.toLocaleDateString('ru-RU')}`,fontSize:7.5,color:clearMuted,alignment:'right',margin:[0,3,0,0]}],width:190,margin:[0,9,0,0]}
+        ],margin:[0,0,0,12]},
+        {table:{widths:['*'],body:[[{stack:[
+          {text:'АГРОИНТЕЛЛЕКТ. ОНЛАЙН-ФЕРМА',fontSize:7,bold:true,color:'#4D8DBA',characterSpacing:1},
+          {text:'Расчёт стоимости подключения',fontSize:25,bold:true,color:clearInk,margin:[0,8,0,4]},
+          {text:'Конкретный состав подключения, выбранные лицензии, услуги и условия запуска.',fontSize:9,color:clearMuted,lineHeight:1.4}
+        ],fillColor:clearBlueSoft,margin:[19,16,19,16]}]]},layout:'noBorders'},
+        {table:{widths:['*','*'],body:[[
+          {stack:[{text:'КЛИЕНТ',fontSize:6.5,bold:true,color:'#7B8B9E',characterSpacing:.6},{text:$('#clientName').value||'Не указан',fontSize:10.5,bold:true,color:clearInk,margin:[0,4,0,0]}],fillColor:'#F8FBFD',margin:[12,9,12,9]},
+          {stack:[{text:'МЕНЕДЖЕР',fontSize:6.5,bold:true,color:'#7B8B9E',characterSpacing:.6},{text:$('#managerName').value||'Не указан',fontSize:10.5,bold:true,color:clearInk,margin:[0,4,0,0]}],fillColor:'#F8FBFD',margin:[12,9,12,9]}],[
+          {stack:[{text:'КОНФИГУРАЦИЯ',fontSize:6.5,bold:true,color:'#7B8B9E',characterSpacing:.6},{text:`${r.sites.length} ${premiumSitesWord} • ${new Intl.NumberFormat('ru-RU').format(premiumHeadcount)} голов`,fontSize:10,bold:true,color:clearInk,margin:[0,4,0,0]}],fillColor:'#F8FBFD',margin:[12,9,12,9]},
+          {stack:[{text:'ПЕРИОД РАСЧЁТА',fontSize:6.5,bold:true,color:'#7B8B9E',characterSpacing:.6},{text:`${r.period} мес.`,fontSize:10,bold:true,color:clearInk,margin:[0,4,0,0]}],fillColor:'#F8FBFD',margin:[12,9,12,9]}
+        ]]},layout:{hLineColor:()=>clearBlueLine,vLineColor:()=>clearBlueLine,paddingLeft:()=>0,paddingRight:()=>5,paddingTop:()=>0,paddingBottom:()=>5}},
+
+        clearSection('01','Что подключаем','Площадки, поголовье и выбранные системы.'),
+        {table:{widths:['*',145],body:clearSiteRows},layout:{hLineColor:()=>clearBlueLine,vLineColor:()=>clearBlueLine,paddingLeft:()=>0,paddingRight:()=>0,paddingTop:()=>0,paddingBottom:()=>5}},
+
+        clearSection('02','Выбранные продукты и услуги','Каждая позиция, включённая в расчёт.'),
+        {table:{widths:['*',115],body:clearProductRows},layout:{hLineColor:()=>clearBlueLine,vLineWidth:()=>0,paddingLeft:()=>0,paddingRight:()=>0,paddingTop:()=>0,paddingBottom:()=>4}},
+
+        {text:'',pageBreak:'before'},
+        {columns:[{image:standardLogo,width:105},{stack:[{text:'ФИНАНСОВЫЕ УСЛОВИЯ',fontSize:7,bold:true,color:'#4D8DBA',alignment:'right',characterSpacing:.7},{text:`Расчёт № ${number}`,fontSize:8.5,bold:true,color:clearInk,alignment:'right',margin:[0,4,0,0]}],margin:[0,10,0,0]}],margin:[0,0,0,12]},
+        clearSection('03','Стоимость подключения','Разовый платёж, лицензии, скидки и сопровождение.'),
+        {table:{widths:['*',125],headerRows:1,body:[
+          [{text:'СОСТАВ РАСЧЁТА',fontSize:6.5,bold:true,color:'#557187',fillColor:'#DCEFFA',characterSpacing:.55},{text:'СТОИМОСТЬ',fontSize:6.5,bold:true,color:'#557187',fillColor:'#DCEFFA',alignment:'right',characterSpacing:.55}],
+          ...salesPriceRows
+        ]},layout:{hLineColor:()=>clearBlueLine,vLineWidth:()=>0,paddingLeft:()=>10,paddingRight:()=>10,paddingTop:()=>7,paddingBottom:()=>7}},
+        {table:{widths:['*',190],body:[[
+          {stack:[{text:'ПЕРВЫЙ ПЛАТЁЖ',fontSize:6.5,bold:true,color:'#416F91',characterSpacing:.7},{text:money(r.total),fontSize:24,bold:true,color:clearInk,margin:[0,7,0,0]}],fillColor:clearBlue,margin:[15,13,15,13]},
+          {stack:[{text:`Экономия: ${money(r.termDiscount+r.mustangDiscount)}`,fontSize:7.5,color:'#416F91',alignment:'right'},{text:`Далее: ${money(r.recurringMonthly)} в месяц`,fontSize:10,bold:true,color:clearInk,alignment:'right',margin:[0,6,0,0]},{text:'Подробности зафиксированы в расчёте выше',fontSize:6.5,color:clearMuted,alignment:'right',margin:[0,4,0,0]}],fillColor:clearBlueSoft,margin:[13,14,13,12]}
+        ]]},layout:'noBorders',margin:[0,10,0,0]},
+        clearSection('3.1','Структура платежа','Что оплачивается разово и что относится к выбранному периоду.'),
+        {table:{widths:['*','*','*'],body:[[
+          {stack:[{text:'ПОДКЛЮЧЕНИЕ',fontSize:6.5,bold:true,color:'#4D8DBA'},{text:money(r.connection),fontSize:13,bold:true,color:clearInk,margin:[0,7,0,0]},{text:'разово',fontSize:7,color:clearMuted,margin:[0,3,0,0]}],fillColor:clearBlueSoft,margin:[11,10,11,10]},
+          {stack:[{text:'ЛИЦЕНЗИИ',fontSize:6.5,bold:true,color:'#4D8DBA'},{text:money(r.licensesNet),fontSize:13,bold:true,color:clearInk,margin:[0,7,0,0]},{text:`за ${r.period} мес.`,fontSize:7,color:clearMuted,margin:[0,3,0,0]}],fillColor:'#F6FBFF',margin:[11,10,11,10]},
+          {stack:[{text:'СОПРОВОЖДЕНИЕ',fontSize:6.5,bold:true,color:'#4D8DBA'},{text:money(r.supportPeriod),fontSize:13,bold:true,color:clearInk,margin:[0,7,0,0]},{text:r.supportPeriod?`за ${r.period} мес.`:'не выбрано',fontSize:7,color:clearMuted,margin:[0,3,0,0]}],fillColor:clearBlueSoft,margin:[11,10,11,10]}
+        ]]},layout:{hLineWidth:()=>0,vLineWidth:()=>0,paddingLeft:()=>0,paddingRight:()=>6}},
+        {text:'Скидки применяются только к лицензиям. Подключение и сопровождение рассчитываются отдельно.',fontSize:7.5,color:clearMuted,fillColor:'#F7FAFC',margin:[12,9,12,9]},
+
+        ...clearSupport,
+        clearSection(r.supportPeriod?'05':'04','Порядок запуска','Что происходит после подтверждения расчёта.'),
+        {table:{widths:['*','*'],body:[[
+          {stack:[{text:'01',fontSize:7.5,bold:true,color:'#4D8DBA'},{text:'Согласование конфигурации и условий',fontSize:8.5,bold:true,color:clearInk,margin:[0,5,0,0]}],fillColor:clearBlueSoft,margin:[11,9,11,9]},
+          {stack:[{text:'02',fontSize:7.5,bold:true,color:'#4D8DBA'},{text:'Подключение источников и интеграций',fontSize:8.5,bold:true,color:clearInk,margin:[0,5,0,0]}],fillColor:'#F6FBFF',margin:[11,9,11,9]}],[
+          {stack:[{text:'03',fontSize:7.5,bold:true,color:'#4D8DBA'},{text:'Настройка, обучение и проверка данных',fontSize:8.5,bold:true,color:clearInk,margin:[0,5,0,0]}],fillColor:'#F6FBFF',margin:[11,9,11,9]},
+          {stack:[{text:'04',fontSize:7.5,bold:true,color:'#4D8DBA'},{text:'Запуск и переход к регулярной работе',fontSize:8.5,bold:true,color:clearInk,margin:[0,5,0,0]}],fillColor:clearBlueSoft,margin:[11,9,11,9]}
+        ]]},layout:{hLineColor:()=>clearBlueLine,vLineColor:()=>clearBlueLine,paddingLeft:()=>0,paddingRight:()=>5,paddingTop:()=>0,paddingBottom:()=>5}},
+        {table:{widths:['*',165],body:[[
+          {stack:[{text:'СЛЕДУЮЩИЙ ШАГ',fontSize:6.5,bold:true,color:'#416F91',characterSpacing:.7},{text:'Подтвердить состав подключения и согласовать дату запуска',fontSize:10.5,bold:true,color:clearInk,lineHeight:1.25,margin:[0,6,0,0]}],fillColor:clearBlue,margin:[14,11,14,11]},
+          {stack:[{text:'МЕНЕДЖЕР',fontSize:6.5,bold:true,color:'#4D8DBA',alignment:'right'},{text:$('#managerName').value||'Будет назначен',fontSize:9.5,bold:true,color:clearInk,alignment:'right',margin:[0,7,0,0]}],fillColor:clearBlueSoft,margin:[13,12,13,11]}
+        ]]},layout:'noBorders',margin:[0,11,0,0]},
+        {text:'Расчёт является предварительным и не является публичной офертой. Окончательные условия, состав работ и сроки фиксируются в договоре.',fontSize:6.4,color:'#8996A8',lineHeight:1.35,margin:[0,9,0,0]}
+      ]
+    };
+    const pdf=pdfMake.createPdf(clearDoc);
     if(mode==='share'){
       pdf.getBlob(async blob=>{
         try{

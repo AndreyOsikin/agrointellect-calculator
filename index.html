@@ -7,7 +7,9 @@
   <title>Расчёт стоимости подключения «Онлайн‑фермы» — Агроинтеллект</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
 
   <style>
 :root{--blue:#1767e8;--blue-dark:#124fb5;--blue-soft:#eef5ff;--ink:#172033;--muted:#6f7c91;--line:#dce5f0;--page:#f3f7fb;--green:#16a36a;--danger:#d9534f;--radius:22px;--shadow:0 16px 45px rgba(28,61,103,.09)}
@@ -527,6 +529,104 @@
     #pdfReport .pdf-steps{gap:8px;margin-bottom:16px;break-inside:avoid}
     #pdfReport .pdf-steps>div{padding:10px;border-radius:10px;background:#f8fbff}
     #pdfReport .pdf-foot{margin-top:16px;padding-top:10px;font-size:7px;line-height:1.5}
+  </style>
+  <style id="v26-premium-ui">
+    :root{
+      --blue:#0071e3;--blue-dark:#0059b8;--blue-soft:#eaf4ff;
+      --ink:#1d1d1f;--muted:#6e6e73;--line:rgba(30,52,76,.12);
+      --page:#f5f5f7;--green:#15845b;--danger:#d92d20;
+      --radius:24px;--shadow:0 2px 8px rgba(0,0,0,.035),0 18px 55px rgba(25,48,75,.07)
+    }
+    html{scroll-behavior:smooth;background:var(--page)}
+    body{font-family:Manrope,-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;background:var(--page);color:var(--ink);letter-spacing:-.012em}
+    .page-bg{background:radial-gradient(circle at 12% 0,rgba(0,113,227,.075),transparent 30%),radial-gradient(circle at 94% 12%,rgba(116,149,255,.07),transparent 26%),linear-gradient(180deg,#fafbfc 0%,#f4f5f7 42%,#f6f6f8 100%)}
+    .container{width:min(100% - 40px,1420px)}
+    .topbar{height:72px;background:rgba(250,251,252,.78);border-bottom:1px solid rgba(30,52,76,.08);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);box-shadow:0 1px 0 rgba(255,255,255,.65)}
+    .topbar-inner{justify-content:space-between}
+    .topbar-spacer{width:1px;height:1px}
+    .sync-pill{height:38px;padding:0 14px;background:rgba(255,255,255,.7);border:1px solid rgba(30,52,76,.1);box-shadow:0 6px 20px rgba(38,62,92,.05);color:#737d8c;font-size:11px;letter-spacing:0}
+    .sync-dot{width:7px;height:7px;box-shadow:0 0 0 4px rgba(240,173,78,.12)}
+    .page-grid{grid-template-columns:minmax(0,1fr) 430px;gap:22px;padding:26px 0 64px}
+    .main-column{gap:16px}
+    .intro-card,.form-section,.summary-card{border:1px solid rgba(30,52,76,.09);border-radius:26px;background:rgba(255,255,255,.88);box-shadow:var(--shadow);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+    .intro-card{min-height:190px;padding:34px 220px 34px 34px;background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(247,251,255,.94));isolation:isolate}
+    .intro-card:after{right:-80px;top:-170px;width:340px;height:340px;background:radial-gradient(circle,rgba(0,113,227,.11),rgba(0,113,227,0) 70%);z-index:-1}
+    .intro-card .eyebrow{font-size:10px;color:var(--blue);letter-spacing:.15em;font-weight:800}
+    .intro-card h1{font-size:34px;line-height:1.12;letter-spacing:-.045em;margin:12px 0 11px;color:#1d1d1f;max-width:720px}
+    .intro-card p{font-size:13px;line-height:1.65;color:#7a8391;max-width:690px}
+    .intro-logo{right:30px;width:160px;height:104px;filter:drop-shadow(0 14px 24px rgba(20,70,120,.1));opacity:.96}
+    .form-section{overflow:hidden;transition:border-color .25s ease,box-shadow .25s ease,transform .25s ease,background .25s ease}
+    .form-section:hover{border-color:rgba(0,113,227,.16);box-shadow:0 2px 8px rgba(0,0,0,.03),0 24px 65px rgba(25,70,120,.085)}
+    .form-section.is-active{transform:none!important;border-color:rgba(0,113,227,.28)!important;box-shadow:0 0 0 4px rgba(0,113,227,.055),0 24px 65px rgba(25,70,120,.1)!important}
+    .main-column.has-active>.form-section:not(.is-active),.main-column.has-active>.intro-card{opacity:1!important}
+    .section-heading{padding:18px 22px;border-bottom:1px solid rgba(30,52,76,.08);background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(250,251,253,.78))}
+    .section-number{width:36px;height:36px;border-radius:11px;background:linear-gradient(145deg,#edf6ff,#e6f1ff);color:var(--blue);box-shadow:inset 0 0 0 1px rgba(0,113,227,.06);font-size:11px}
+    .section-heading h2{font-size:16px;letter-spacing:-.025em;color:#24282f}
+    .section-heading p{font-size:10px;color:#9299a4;margin-top:3px}
+    .section-body{padding:22px}
+    .form-grid{gap:15px}.form-grid.two{column-gap:16px;row-gap:14px}
+    .field{gap:7px}
+    .field>span{font-size:10px;font-weight:750;color:#4c5666;letter-spacing:.005em}
+    .field small{font-size:8px;color:#9ba2ad}
+    .field input,.field select{height:46px;border:1px solid rgba(46,71,101,.16);border-radius:13px;background:rgba(248,250,252,.78);padding:0 14px;color:#20242b;font-size:12px;font-weight:600;box-shadow:inset 0 1px 2px rgba(18,38,63,.025);transition:border-color .18s ease,box-shadow .18s ease,background .18s ease,transform .18s ease}
+    .field input:hover,.field select:hover{border-color:rgba(0,113,227,.28);background:#fff}
+    .field input:focus,.field select:focus,.field:focus-within input,.field:focus-within select{border-color:var(--blue)!important;background:#fff!important;box-shadow:0 0 0 4px rgba(0,113,227,.11),0 8px 22px rgba(0,83,170,.08)!important;transform:translateY(-1px)}
+    .field input::placeholder{color:#b0b6bf;font-weight:500}
+    .field.is-invalid input,.field.is-invalid select{border-color:rgba(217,45,32,.62)!important;box-shadow:0 0 0 4px rgba(217,45,32,.08)!important}
+    .switch-field{min-height:58px;padding:13px 15px;border:1px solid rgba(46,71,101,.12);border-radius:15px;background:#f8fafc;transition:.2s ease}
+    .switch-field:hover{border-color:rgba(0,113,227,.22);background:#fff}
+    .switch-field b{font-size:12px;color:#2d3440}
+    .switch-field i{width:46px;height:27px;background:#c8cdd5;box-shadow:inset 0 0 0 1px rgba(0,0,0,.035)}
+    .switch-field i:after{width:21px;height:21px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+    .switch-field input:checked+i{background:var(--blue)}
+    .switch-field input:checked+i:after{transform:translateX(19px)}
+    .sites-list{gap:14px}
+    .site-card{border:1px solid rgba(46,71,101,.11);border-radius:18px;background:rgba(249,251,253,.85);overflow:hidden!important;transition:border-color .22s ease,box-shadow .22s ease,transform .22s ease}
+    .site-card:hover{border-color:rgba(0,113,227,.2);box-shadow:0 14px 38px rgba(25,65,110,.07)}
+    .site-card.is-active{transform:none!important;border-color:rgba(0,113,227,.34)!important;box-shadow:0 0 0 4px rgba(0,113,227,.07),0 16px 42px rgba(25,65,110,.08)!important}
+    .site-head{padding:15px 16px;background:rgba(255,255,255,.9);border-bottom:1px solid rgba(46,71,101,.08);border-radius:18px 18px 0 0}
+    .site-index{width:34px;height:34px;border-radius:10px;background:#edf5ff;color:var(--blue);font-size:10px}
+    .site-card.is-active .site-index{background:var(--blue);box-shadow:0 8px 18px rgba(0,113,227,.24)}
+    .site-head h3{font-size:13px;letter-spacing:-.018em;color:#262b33}
+    .site-head p{font-size:9px;color:#9aa1ac}
+    .tariff-badge{padding:7px 10px;background:#edf8f3;color:#16815b;font-size:9px}
+    .site-fields{padding:17px 16px}
+    .summary-card{top:92px;padding:24px;background:rgba(255,255,255,.93);border-color:rgba(30,52,76,.1)}
+    .summary-kicker{font-size:10px;color:#7c8695;letter-spacing:.11em}
+    .live-badge{padding:6px 9px;background:#eaf8f2;color:#16815b;font-size:9px}
+    .total-block{position:relative;overflow:hidden;margin:17px 0 14px;padding:26px 24px;border-radius:21px;background:linear-gradient(145deg,#0878e8 0%,#0066d4 48%,#0758bc 100%);box-shadow:0 18px 38px rgba(0,91,190,.25)}
+    .total-block:after{content:"";position:absolute;width:190px;height:190px;border-radius:50%;right:-75px;top:-90px;background:rgba(255,255,255,.09)}
+    .total-block small{font-size:11px;color:rgba(255,255,255,.78)}
+    .total-block strong{font-size:42px;line-height:1;letter-spacing:-.05em;margin-top:9px}
+    .total-block p{font-size:10px;line-height:1.5;color:rgba(255,255,255,.75)}
+    .summary-section{margin-top:12px;padding:15px;border:1px solid rgba(46,71,101,.1);border-radius:16px;background:rgba(249,251,253,.72)}
+    .summary-section-title{font-size:10px;color:#758092;margin-bottom:5px}
+    .summary-rows>div{padding:11px 2px;border-color:rgba(46,71,101,.08);font-size:11px}
+    .summary-rows b{font-size:13px;color:#242a33}
+    .summary-final-license{background:#edf8f3!important;color:#157451!important;border-radius:12px!important}
+    .summary-period{background:#eef5ff!important;border-radius:12px!important}
+    .button{height:48px;margin-top:10px;border-radius:14px;font-size:11px;font-weight:750;letter-spacing:-.005em;transition:transform .18s ease,box-shadow .18s ease,background .18s ease,border-color .18s ease}
+    .button:hover{transform:translateY(-2px)}
+    .button:active{transform:translateY(0) scale(.992)}
+    .button.primary{background:var(--blue);box-shadow:0 10px 24px rgba(0,113,227,.2)}
+    .button.primary:hover{background:#087be7;box-shadow:0 14px 30px rgba(0,113,227,.27)}
+    .button.secondary{background:#f1f6fc;color:#17599e;border:1px solid rgba(0,113,227,.1)}
+    .button.secondary:hover{background:#e9f3ff;border-color:rgba(0,113,227,.18)}
+    .breakdown{border-top-color:rgba(46,71,101,.1)}
+    .breakdown summary{font-size:10px;color:#596577}
+    .break-item{border-color:rgba(46,71,101,.08);font-size:9px}
+    .source-note{color:#a0a7b1;font-size:8px}
+    .toast{bottom:24px;border-radius:14px;background:rgba(25,28,34,.9);backdrop-filter:blur(18px);font-size:11px;box-shadow:0 14px 40px rgba(0,0,0,.2)}
+    @media(prefers-reduced-motion:no-preference){
+      .intro-card,.form-section,.summary-card{animation:premium-in .55s cubic-bezier(.2,.75,.25,1) both}
+      .form-section:nth-child(2){animation-delay:.06s}.form-section:nth-child(3){animation-delay:.12s}.form-section:nth-child(4){animation-delay:.18s}
+      .summary-card{animation-delay:.1s}
+      @keyframes premium-in{from{opacity:0;transform:translateY(12px) scale(.995)}to{opacity:1;transform:none}}
+    }
+    @media(max-width:1100px){.page-grid{grid-template-columns:minmax(0,1fr) 390px}.container{width:min(100% - 28px,1180px)}}
+    @media(max-width:900px){.page-grid{grid-template-columns:1fr}.summary-card{position:static}.intro-card{padding:30px}.intro-logo{display:none}.container{width:min(100% - 24px,760px)}}
+    @media(max-width:640px){.topbar{height:64px}.page-grid{padding-top:16px}.intro-card{min-height:0;padding:25px 21px}.intro-card h1{font-size:27px}.section-heading{padding:16px 17px}.section-body{padding:18px 16px}.form-grid.two{grid-template-columns:1fr}.field input,.field select{height:48px}.summary-card{padding:18px;border-radius:22px}.total-block{padding:23px 20px}.total-block strong{font-size:36px}.site-fields{padding:15px 14px}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
   </style>
 </head>
 <body>
@@ -1121,22 +1221,77 @@ $('#siteCount').addEventListener('input',syncSites);document.querySelectorAll('i
   }
 
   const filename='Расчет_стоимости_подключения_'+($('#clientName').value||'Агроинтеллект').replace(/[^а-яА-Яa-zA-Z0-9_-]+/g,'_')+'.pdf';
-  const report=$('#pdfReport');
-  const originalTitle=document.title;
   try{
-    report.setAttribute('aria-hidden','false');
-    if(document.fonts?.ready)await document.fonts.ready;
-    await Promise.all([...report.querySelectorAll('img')].map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=img.onerror=resolve})));
-    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    document.title=filename.replace(/\.pdf$/i,'');
-    toast('В окне печати выберите «Сохранить как PDF»');
-    window.print();
+    if(typeof pdfMake==='undefined')throw new Error('PDF library unavailable');
+    const logo=$('#pdfReport .pdf-logo').src;
+    const number=now.toISOString().slice(0,10).replaceAll('-','')+'-'+String(now.getTime()).slice(-4);
+    const section=text=>({text,style:'sectionTitle',margin:[0,14,0,7]});
+    const info=(label,value)=>({stack:[{text:label,style:'infoLabel'},{text:value||'Не указан',style:'infoValue'}],fillColor:'#F5F8FD',margin:[11,9,11,9]});
+    const siteContent=r.sites.flatMap((site,index)=>[
+      {table:{widths:['*','auto'],body:[[
+        {stack:[{text:`${index+1}. ${site.name||'Площадка'}`,bold:true,fontSize:10,color:'#172033'},{text:`Управление стадом: ${site.herd||'отсутствует'}   •   Кормление: ${site.feed||'отсутствует'}\nДоильное оборудование: ${site.milking||'отсутствует'}   •   Интеграция с СУС: ${site.integrated||'Нет'}`,fontSize:8,color:'#65738A',lineHeight:1.35,margin:[0,4,0,0]}]},{text:`${new Intl.NumberFormat('ru-RU').format(site.headcount)} гол.`,bold:true,fontSize:10,color:'#1767E8',alignment:'right'}
+      ]]},layout:{hLineColor:()=> '#DCE5F0',vLineColor:()=> '#DCE5F0',paddingLeft:()=>10,paddingRight:()=>10,paddingTop:()=>8,paddingBottom:()=>8},margin:[0,0,0,6]}
+    ]);
+    const priceBody=[
+      [{text:'Состав расчёта',style:'tableHeader'},{text:'Стоимость',style:'tableHeader',alignment:'right'}],
+      ...rows.map(([name,value])=>{
+        const discount=name.startsWith('Скидка');
+        const subtotal=name.startsWith('Лицензии с')||name.startsWith('Лицензии за выбранный');
+        return [{text:name,bold:subtotal,color:discount?'#16815B':'#25324A'},{text:value,bold:subtotal,alignment:'right',color:discount?'#16815B':'#172033'}];
+      })
+    ];
+    const productText=products.map(x=>x.name).join('   •   ');
+    const supportBlock=(r.supportPeriod&&r.supportTariff)?[
+      {text:'СОПРОВОЖДЕНИЕ',style:'sectionTitle',pageBreak:'before',margin:[0,0,0,7]},
+      {table:{widths:['*','auto'],body:[[
+        {stack:[{text:r.supportTariff.name,bold:true,fontSize:15,color:'#1767E8'},{text:r.supportTariff.description,fontSize:9,color:'#65738A',margin:[0,5,0,7]},{ul:r.supportTariff.features.map(x=>({text:x,fontSize:8.5,color:'#344158'})),margin:[0,0,0,0]}]},
+        {stack:[{text:money(r.supportMonthly)+'/мес.',bold:true,fontSize:13,color:'#172033',alignment:'right'},{text:money(r.supportPeriod)+' за период',fontSize:8,color:'#65738A',alignment:'right',margin:[0,4,0,0]}]}
+      ]]},layout:{hLineColor:()=> '#B9D4FF',vLineColor:()=> '#B9D4FF',paddingLeft:()=>14,paddingRight:()=>14,paddingTop:()=>13,paddingBottom:()=>13},margin:[0,0,0,14]}
+    ]:[];
+    const doc={
+      pageSize:'A4',pageMargins:[38,34,38,36],
+      background:(page)=>({canvas:[{type:'rect',x:0,y:0,w:595,h:10,color:'#1767E8'}]}),
+      footer:(current,count)=>({columns:[{text:'Агроинтеллект • расчёт стоимости подключения',color:'#91A0B5',fontSize:7},{text:`${current} / ${count}`,alignment:'right',color:'#91A0B5',fontSize:7}],margin:[38,0,38,16]}),
+      defaultStyle:{font:'Roboto',fontSize:9,color:'#25324A'},
+      styles:{
+        kicker:{fontSize:8,bold:true,color:'#1767E8',characterSpacing:1.5},
+        title:{fontSize:24,bold:true,color:'#172033',lineHeight:1.05},
+        subtitle:{fontSize:9,color:'#6F7C91',lineHeight:1.35},
+        sectionTitle:{fontSize:9,bold:true,color:'#1767E8',characterSpacing:1.1},
+        infoLabel:{fontSize:7,color:'#7B8798'},infoValue:{fontSize:10,bold:true,color:'#172033',margin:[0,3,0,0]},
+        tableHeader:{fontSize:8,bold:true,color:'#6F7C91',fillColor:'#F5F8FD'}
+      },
+      content:[
+        {columns:[{image:logo,width:122},{stack:[{text:'РАСЧЁТ №',fontSize:7,color:'#7B8798',alignment:'right'},{text:number,bold:true,fontSize:11,alignment:'right',margin:[0,3,0,0]},{text:now.toLocaleDateString('ru-RU'),fontSize:8,color:'#7B8798',alignment:'right',margin:[0,3,0,0]}]}],margin:[0,0,0,14]},
+        {canvas:[{type:'line',x1:0,y1:0,x2:519,y2:0,lineWidth:1.5,lineColor:'#1767E8'}],margin:[0,0,0,16]},
+        {text:'РАСЧЁТ СТОИМОСТИ ПОДКЛЮЧЕНИЯ',style:'kicker'},
+        {text:'«Агроинтеллект. Онлайн-ферма»',style:'title',margin:[0,7,0,5]},
+        {text:'Подключение, лицензии, интеграции и сопровождение для выбранной конфигурации хозяйства.',style:'subtitle',margin:[0,0,0,13]},
+        {table:{widths:['*','*'],body:[[info('Клиент',$('#clientName').value),info('Менеджер',$('#managerName').value)],[info('Тип клиента',r.type),info('Период лицензии',r.period+' мес.')]]},layout:{hLineColor:()=> '#DCE5F0',vLineColor:()=> '#DCE5F0',paddingLeft:()=>0,paddingRight:()=>6,paddingTop:()=>0,paddingBottom:()=>6}},
+        section('ВЫБРАННАЯ КОНФИГУРАЦИЯ'),...siteContent,
+        {text:productText,bold:true,fontSize:8.5,color:'#1767E8',fillColor:'#EEF5FF',margin:[10,8,10,8]},
+        section('СТОИМОСТЬ'),
+        {table:{headerRows:1,widths:['*',105],body:priceBody},layout:{hLineColor:()=> '#DCE5F0',vLineWidth:()=>0,paddingLeft:()=>9,paddingRight:()=>9,paddingTop:()=>6,paddingBottom:()=>6}},
+        {table:{widths:['*',220],body:[[
+          {stack:[{text:'ИТОГОВАЯ СТОИМОСТЬ',fontSize:8,bold:true,color:'#DCE9FF',characterSpacing:1},{text:money(r.total),fontSize:27,bold:true,color:'#FFFFFF',margin:[0,4,0,0]}],fillColor:'#1767E8',margin:[14,12,14,12]},
+          {stack:[{text:`Экономия по скидкам: ${money(r.termDiscount+r.mustangDiscount)}`,fontSize:8,color:'#EAF2FF',alignment:'right'},{text:`Регулярно далее: ${money(r.recurringMonthly)} в месяц`,fontSize:9,bold:true,color:'#FFFFFF',alignment:'right',margin:[0,5,0,0]},{text:r.supportMonthly?`Включая сопровождение: ${money(r.supportMonthly)}/мес.`:'Подключение оплачивается один раз',fontSize:7.5,color:'#DCE9FF',alignment:'right',margin:[0,4,0,0]}],fillColor:'#1767E8',margin:[14,14,14,12]}
+        ]]},layout:'noBorders',margin:[0,12,0,0]},
+        ...supportBlock,
+        section('ПОРЯДОК ЗАПУСКА'),
+        {table:{widths:['*','*'],body:[[
+          {text:[{text:'01  ',bold:true,color:'#1767E8'},'Согласование конфигурации и условий'],fillColor:'#F5F8FD',margin:[9,9,9,9]},
+          {text:[{text:'02  ',bold:true,color:'#1767E8'},'Подключение источников данных и интеграций'],fillColor:'#F5F8FD',margin:[9,9,9,9]}],[
+          {text:[{text:'03  ',bold:true,color:'#1767E8'},'Настройка, обучение сотрудников и проверка данных'],fillColor:'#F5F8FD',margin:[9,9,9,9]},
+          {text:[{text:'04  ',bold:true,color:'#1767E8'},'Запуск системы и переход к регулярной работе'],fillColor:'#F5F8FD',margin:[9,9,9,9]}
+        ]]},layout:{hLineColor:()=> '#DCE5F0',vLineColor:()=> '#DCE5F0',paddingLeft:()=>0,paddingRight:()=>6,paddingTop:()=>0,paddingBottom:()=>6}},
+        {text:'Подключение и запуск оплачиваются один раз. Лицензии и выбранное сопровождение рассчитаны за выбранный период. Скидки применяются только к лицензиям и не распространяются на сопровождение. Расчёт является предварительным и не является публичной офертой; окончательные условия фиксируются в договоре.',fontSize:7,color:'#7B8798',lineHeight:1.4,margin:[0,14,0,0]}
+      ]
+    };
+    pdfMake.createPdf(doc).download(filename);
+    toast('Расчёт стоимости скачивается');
   }catch(e){
     console.error(e);
-    toast('Не удалось открыть сохранение PDF');
-  }finally{
-    document.title=originalTitle;
-    report.setAttribute('aria-hidden','true');
+    toast('Не удалось сформировать PDF');
   }
 }
 $('#printResult').onclick=downloadPdf;renderBase();syncSites();syncSupportUI();calculate();loadApi();
@@ -1175,5 +1330,211 @@ $('#printResult').onclick=downloadPdf;renderBase();syncSites();syncSupportUI();c
 })();
 
   </script>
+<style id="v27-form-polish">
+  /* Более читаемые подписи и единый ритм формы */
+  .field label{
+    margin-bottom:8px!important;
+    color:#344054!important;
+    font-size:12.5px!important;
+    font-weight:700!important;
+    line-height:1.35!important;
+    letter-spacing:-.01em!important;
+  }
+  .field small,.field-note,.section-subtitle,.site-subtitle{
+    font-size:10.5px!important;
+    line-height:1.45!important;
+    color:#8994a5!important;
+  }
+  .field input,.field select,.modern-select__button{
+    min-height:52px!important;
+    font-size:14px!important;
+    font-weight:560!important;
+    color:#202939!important;
+  }
+  .field input::placeholder{color:#a7b0be!important;font-weight:480!important}
+  .field input:hover,.field select:hover{border-color:#aabbd0!important;background:#fff!important}
+  .field:focus-within label{color:#006edc!important}
+  .field{position:relative;transition:transform .22s cubic-bezier(.2,.7,.2,1)}
+  @media (prefers-reduced-motion:no-preference){.field:focus-within{transform:translateY(-1px)}}
+
+  /* Нативный select остаётся источником данных, но отображается наше меню */
+  select.modern-select__native{
+    position:absolute!important;
+    width:1px!important;height:1px!important;
+    opacity:0!important;pointer-events:none!important;
+    clip-path:inset(50%)!important;
+  }
+  .modern-select{position:relative;width:100%}
+  .modern-select__button{
+    width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:0 16px;border:1px solid #cbd7e6;border-radius:14px;
+    background:linear-gradient(180deg,#fff 0%,#fbfcfe 100%);
+    box-shadow:0 1px 1px rgba(16,24,40,.02),inset 0 1px 0 rgba(255,255,255,.8);
+    cursor:pointer;text-align:left;outline:none;
+    transition:border-color .2s ease,box-shadow .2s ease,background .2s ease,transform .2s ease;
+  }
+  .modern-select__button:hover{border-color:#9db2ca;background:#fff}
+  .modern-select__button:focus-visible,.modern-select.is-open .modern-select__button{
+    border-color:#0877e8;background:#fff;
+    box-shadow:0 0 0 4px rgba(0,113,227,.13),0 8px 22px rgba(17,72,128,.08);
+  }
+  .modern-select__button:disabled{opacity:.55;cursor:not-allowed;background:#f4f6f8}
+  .modern-select__value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .modern-select__chevron{
+    width:18px;height:18px;display:grid;place-items:center;flex:0 0 auto;
+    color:#617085;transition:transform .24s cubic-bezier(.2,.75,.2,1);
+  }
+  .modern-select__chevron:before{
+    content:"";width:7px;height:7px;border-right:1.8px solid currentColor;
+    border-bottom:1.8px solid currentColor;transform:translateY(-2px) rotate(45deg);
+  }
+  .modern-select.is-open .modern-select__chevron{transform:rotate(180deg)}
+  .modern-select__menu{
+    position:fixed;z-index:10000;padding:7px;
+    overflow:auto;overscroll-behavior:contain;
+    border:1px solid rgba(126,148,174,.27);border-radius:16px;
+    background:rgba(255,255,255,.96);
+    box-shadow:0 24px 64px rgba(26,46,72,.18),0 5px 16px rgba(26,46,72,.09);
+    backdrop-filter:blur(22px) saturate(1.25);-webkit-backdrop-filter:blur(22px) saturate(1.25);
+    opacity:0;transform:translateY(-5px) scale(.985);transform-origin:top center;
+    transition:opacity .17s ease,transform .2s cubic-bezier(.2,.8,.2,1);
+    scrollbar-width:thin;scrollbar-color:#c8d4e2 transparent;
+  }
+  .modern-select__menu.is-visible{opacity:1;transform:none}
+  .modern-select__option{
+    width:100%;min-height:42px;display:flex;align-items:center;justify-content:space-between;
+    padding:9px 11px;border:0;border-radius:10px;background:transparent;
+    color:#283445;font:560 13.5px/1.25 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    text-align:left;cursor:pointer;outline:none;transition:background .14s ease,color .14s ease,transform .14s ease;
+  }
+  .modern-select__option:hover,.modern-select__option:focus-visible{background:#edf5ff;color:#005fc4}
+  .modern-select__option:active{transform:scale(.99)}
+  .modern-select__option.is-selected{background:#e6f2ff;color:#0068d5;font-weight:720}
+  .modern-select__option.is-selected:after{
+    content:"";width:8px;height:4px;margin-left:16px;border-left:2px solid currentColor;
+    border-bottom:2px solid currentColor;transform:translateY(-1px) rotate(-45deg);flex:0 0 auto;
+  }
+  .modern-select__option:disabled{opacity:.42;cursor:not-allowed}
+  .modern-select__menu.is-above{transform-origin:bottom center}
+
+  /* Усиление визуальной иерархии */
+  .section-title{font-size:17px!important;letter-spacing:-.025em!important}
+  .site-title{font-size:14px!important;letter-spacing:-.015em!important}
+  .section-number,.site-number{font-weight:800!important}
+  .site-card{transition:border-color .24s ease,box-shadow .24s ease,transform .24s ease!important}
+  .site-card:hover{border-color:rgba(0,113,227,.3)!important;box-shadow:0 14px 34px rgba(37,78,120,.09)!important}
+  .site-card.is-active{transform:translateY(-2px)!important}
+  @media(max-width:640px){
+    .field label{font-size:12px!important}.field input,.modern-select__button{min-height:50px!important;font-size:14px!important}
+    .modern-select__option{min-height:44px;font-size:14px}.section-title{font-size:16px!important}
+  }
+</style>
+<script>
+(function modernSelects(){
+  const controls=new Set();
+  let opened=null;
+
+  function close(control,restoreFocus){
+    if(!control||!control.open)return;
+    control.open=false;
+    control.wrap.classList.remove('is-open');
+    control.menu.classList.remove('is-visible');
+    setTimeout(()=>{if(!control.open)control.menu.hidden=true},180);
+    control.button.setAttribute('aria-expanded','false');
+    if(opened===control)opened=null;
+    if(restoreFocus)control.button.focus();
+  }
+  function closeAll(except){controls.forEach(c=>{if(c!==except)close(c,false)})}
+  function currentOption(select){return select.options[select.selectedIndex]||select.options[0]}
+  function sync(control){
+    const option=currentOption(control.select);
+    control.value.textContent=option?option.textContent.trim():'Выберите значение';
+    control.button.disabled=control.select.disabled;
+    control.button.setAttribute('aria-disabled',String(control.select.disabled));
+    control.menu.querySelectorAll('.modern-select__option').forEach((item,i)=>{
+      const selected=i===control.select.selectedIndex;
+      item.classList.toggle('is-selected',selected);
+      item.setAttribute('aria-selected',String(selected));
+    });
+  }
+  function buildOptions(control){
+    control.menu.replaceChildren();
+    [...control.select.options].forEach((option,index)=>{
+      const item=document.createElement('button');
+      item.type='button';item.className='modern-select__option';item.role='option';
+      item.textContent=option.textContent.trim();item.disabled=option.disabled;
+      item.dataset.index=index;
+      item.addEventListener('click',()=>{
+        control.select.selectedIndex=index;
+        control.select.dispatchEvent(new Event('input',{bubbles:true}));
+        control.select.dispatchEvent(new Event('change',{bubbles:true}));
+        sync(control);close(control,true);
+      });
+      item.addEventListener('keydown',e=>{
+        const items=[...control.menu.querySelectorAll('.modern-select__option:not(:disabled)')];
+        const at=items.indexOf(item);
+        if(e.key==='ArrowDown'){e.preventDefault();items[(at+1)%items.length]?.focus()}
+        if(e.key==='ArrowUp'){e.preventDefault();items[(at-1+items.length)%items.length]?.focus()}
+        if(e.key==='Escape'){e.preventDefault();close(control,true)}
+        if(e.key==='Tab')close(control,false);
+      });
+      control.menu.append(item);
+    });
+    sync(control);
+  }
+  function position(control){
+    const rect=control.button.getBoundingClientRect();
+    const gap=7,margin=10;
+    const below=innerHeight-rect.bottom-gap-margin;
+    const above=rect.top-gap-margin;
+    const placeAbove=below<210&&above>below;
+    const maxHeight=Math.max(140,Math.min(360,placeAbove?above:below));
+    control.menu.style.width=Math.max(rect.width,230)+'px';
+    control.menu.style.maxHeight=maxHeight+'px';
+    control.menu.style.left=Math.min(rect.left,innerWidth-Math.max(rect.width,230)-margin)+'px';
+    control.menu.classList.toggle('is-above',placeAbove);
+    control.menu.style.top=(placeAbove?Math.max(margin,rect.top-gap-Math.min(control.menu.scrollHeight,maxHeight)):rect.bottom+gap)+'px';
+  }
+  function open(control){
+    if(control.select.disabled)return;
+    closeAll(control);buildOptions(control);
+    control.open=true;opened=control;control.menu.hidden=false;
+    control.wrap.classList.add('is-open');control.button.setAttribute('aria-expanded','true');
+    position(control);requestAnimationFrame(()=>control.menu.classList.add('is-visible'));
+    const selected=control.menu.querySelector('.is-selected');
+    selected?.scrollIntoView({block:'nearest'});
+  }
+  function enhance(select){
+    if(select.dataset.modernSelect)return;
+    select.dataset.modernSelect='true';select.classList.add('modern-select__native');
+    const wrap=document.createElement('div');wrap.className='modern-select';
+    const button=document.createElement('button');button.type='button';button.className='modern-select__button';
+    button.setAttribute('role','combobox');button.setAttribute('aria-haspopup','listbox');button.setAttribute('aria-expanded','false');
+    const value=document.createElement('span');value.className='modern-select__value';
+    const chevron=document.createElement('span');chevron.className='modern-select__chevron';chevron.setAttribute('aria-hidden','true');
+    button.append(value,chevron);wrap.append(button);select.insertAdjacentElement('afterend',wrap);
+    const menu=document.createElement('div');menu.className='modern-select__menu';menu.role='listbox';menu.hidden=true;document.body.append(menu);
+    const control={select,wrap,button,value,menu,open:false};controls.add(control);
+    button.addEventListener('click',()=>control.open?close(control,false):open(control));
+    button.addEventListener('keydown',e=>{
+      if(['ArrowDown','ArrowUp','Enter',' '].includes(e.key)){e.preventDefault();open(control);setTimeout(()=>control.menu.querySelector('.is-selected')?.focus(),0)}
+      if(e.key==='Escape')close(control,false);
+    });
+    select.addEventListener('change',()=>sync(control));buildOptions(control);
+    control.observer=new MutationObserver(()=>buildOptions(control));
+    control.observer.observe(select,{childList:true,subtree:true,attributes:true});
+  }
+  document.querySelectorAll('select').forEach(enhance);
+  new MutationObserver(mutations=>mutations.forEach(m=>m.addedNodes.forEach(node=>{
+    if(node.nodeType!==1)return;
+    if(node.matches?.('select'))enhance(node);
+    node.querySelectorAll?.('select').forEach(enhance);
+  }))).observe(document.body,{childList:true,subtree:true});
+  document.addEventListener('pointerdown',e=>{if(opened&&!opened.wrap.contains(e.target)&&!opened.menu.contains(e.target))close(opened,false)});
+  document.addEventListener('focusin',e=>{if(opened&&!opened.wrap.contains(e.target)&&!opened.menu.contains(e.target))close(opened,false)});
+  addEventListener('resize',()=>opened&&position(opened));
+  addEventListener('scroll',()=>opened&&position(opened),true);
+})();
+</script>
 </body>
 </html>

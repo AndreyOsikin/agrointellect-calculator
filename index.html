@@ -765,6 +765,7 @@
       <div class="validation-banner" id="validationBanner">Заполните обязательные поля перед формированием расчёта.</div>
       <button class="button primary" id="copyResult">Скопировать расчёт</button>
       <button class="button secondary" id="printResult">Сохранить расчёт стоимости PDF</button>
+      <button class="button share" id="shareResult">Отправить PDF в мессенджер</button>
       <button class="button ghost" id="resetResult">Сбросить расчёт</button>
       <details class="breakdown" open>
         <summary>Расшифровка стоимости <span>⌄</span></summary>
@@ -1166,7 +1167,7 @@ function resultText(){
 }
 function toast(text){const el=document.createElement('div');el.className='toast';el.textContent=text;document.body.append(el);setTimeout(()=>el.remove(),2200)}
 $('#siteCount').addEventListener('input',syncSites);document.querySelectorAll('input[name="supportRequired"]').forEach(el=>el.addEventListener('change',syncSupportUI));renderSupportTariffs();
-['clientName','managerName','trainingPeople','milkAccounting','customIntegration','devHours','clientType','licensePeriod','musoftLicense'].forEach(id=>$('#'+id).addEventListener('input',()=>{calculate();validateCalculation(false)}));$('#copyResult').onclick=async()=>{if(!validateCalculation(true))return;await navigator.clipboard.writeText(resultText());toast('Расчёт скопирован')};$('#resetResult').onclick=resetCalculator;async function downloadPdf(){
+['clientName','managerName','trainingPeople','milkAccounting','customIntegration','devHours','clientType','licensePeriod','musoftLicense'].forEach(id=>$('#'+id).addEventListener('input',()=>{calculate();validateCalculation(false)}));$('#copyResult').onclick=async()=>{if(!validateCalculation(true))return;await navigator.clipboard.writeText(resultText());toast('Расчёт скопирован')};$('#resetResult').onclick=resetCalculator;async function downloadPdf(mode='download'){
   if(!validateCalculation(true))return;
   const r=window.currentResult;if(!r)return;
   const now=new Date(); $('#pdfDate').textContent='от '+now.toLocaleDateString('ru-RU'); $('#pdfNumber').textContent=now.toISOString().slice(0,10).replaceAll('-','')+'-'+String(now.getTime()).slice(-4);
@@ -1287,14 +1288,34 @@ $('#siteCount').addEventListener('input',syncSites);document.querySelectorAll('i
         {text:'Подключение и запуск оплачиваются один раз. Лицензии и выбранное сопровождение рассчитаны за выбранный период. Скидки применяются только к лицензиям и не распространяются на сопровождение. Расчёт является предварительным и не является публичной офертой; окончательные условия фиксируются в договоре.',fontSize:7,color:'#7B8798',lineHeight:1.4,margin:[0,14,0,0]}
       ]
     };
-    pdfMake.createPdf(doc).download(filename);
-    toast('Расчёт стоимости скачивается');
+    const pdf=pdfMake.createPdf(doc);
+    if(mode==='share'){
+      pdf.getBlob(async blob=>{
+        try{
+          const file=new File([blob],filename,{type:'application/pdf'});
+          if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
+            await navigator.share({title:'Расчёт стоимости подключения',text:'Расчёт стоимости подключения «Агроинтеллект. Онлайн-ферма»',files:[file]});
+            toast('Расчёт передан для отправки');
+          }else{
+            pdf.download(filename);
+            toast('PDF сохранён — прикрепите его в мессенджере');
+          }
+        }catch(error){
+          if(error?.name!=='AbortError'){
+            console.error(error);pdf.download(filename);toast('Не удалось открыть отправку — PDF сохранён');
+          }
+        }
+      });
+    }else{
+      pdf.download(filename);
+      toast('Расчёт стоимости скачивается');
+    }
   }catch(e){
     console.error(e);
     toast('Не удалось сформировать PDF');
   }
 }
-$('#printResult').onclick=downloadPdf;renderBase();syncSites();syncSupportUI();calculate();loadApi();
+$('#printResult').onclick=()=>downloadPdf('download');$('#shareResult').onclick=()=>downloadPdf('share');renderBase();syncSites();syncSupportUI();calculate();loadApi();
 
 /* Дополнительная логика интерфейса из исходной версии */
 
@@ -1534,6 +1555,124 @@ $('#printResult').onclick=downloadPdf;renderBase();syncSites();syncSupportUI();c
   document.addEventListener('focusin',e=>{if(opened&&!opened.wrap.contains(e.target)&&!opened.menu.contains(e.target))close(opened,false)});
   addEventListener('resize',()=>opened&&position(opened));
   addEventListener('scroll',()=>opened&&position(opened),true);
+})();
+</script>
+<style id="v28-dashboard-layout">
+  html,body{height:auto!important;min-height:100%;overflow-x:hidden!important;overflow-y:auto!important}
+  body{font-size:16px!important;background:#f2f5f9!important}
+  .container{width:min(1540px,calc(100% - 44px))!important}
+  .page-grid{
+    height:auto!important;min-height:0!important;overflow:visible!important;
+    grid-template-columns:minmax(0,1.08fr) minmax(520px,.92fr)!important;
+    gap:24px!important;padding:30px 0 76px!important;align-items:start!important;
+  }
+  .main-column{height:auto!important;min-height:0!important;overflow:visible!important;padding:0!important;gap:22px!important}
+  .summary-card{
+    position:static!important;top:auto!important;height:auto!important;max-height:none!important;
+    overflow:visible!important;padding:27px!important;
+    border-radius:28px!important;scrollbar-gutter:auto!important;
+  }
+  .intro-card{padding:40px 42px!important;border-radius:28px!important}
+  .intro-card h1{font-size:38px!important;line-height:1.12!important;max-width:760px!important}
+  .intro-card p{font-size:16px!important;line-height:1.65!important;max-width:800px!important}
+  .eyebrow{font-size:12px!important}
+  .form-section{border-radius:26px!important}
+  .section-heading{padding:24px 28px!important}
+  .section-heading h2,.section-title{font-size:19px!important}
+  .section-heading p,.section-subtitle{font-size:12px!important;line-height:1.5!important}
+  .section-body{padding:26px 28px!important;gap:22px 18px!important}
+  .field>span{
+    display:block!important;margin-bottom:9px!important;color:#344054!important;
+    font-size:14px!important;font-weight:720!important;line-height:1.35!important;letter-spacing:-.012em!important;
+  }
+  .field small,.field-note{font-size:12px!important;line-height:1.5!important;margin-top:7px!important}
+  .field input,.field select,.modern-select__button{
+    min-height:56px!important;padding-left:17px!important;padding-right:17px!important;
+    border-radius:15px!important;font-size:16px!important;font-weight:560!important;
+  }
+  .modern-select__option{min-height:46px!important;padding:11px 13px!important;font-size:15px!important}
+  .site-head{padding:20px 22px!important}
+  .site-fields{padding:23px 22px!important;gap:21px 17px!important}
+  .site-title,.site-head h3{font-size:16px!important}
+  .site-subtitle,.site-head p{font-size:11.5px!important}
+  .tariff-badge{font-size:10.5px!important;padding:8px 11px!important}
+  .summary-card>h2,.summary-title{font-size:16px!important}
+  .total-block{padding:30px 28px!important;border-radius:23px!important}
+  .total-block small{font-size:13px!important}.total-block strong{font-size:48px!important}.total-block p{font-size:12px!important}
+  .summary-section{padding:18px!important;border-radius:18px!important}
+  .summary-section-title{font-size:12px!important}
+  .summary-rows>div{font-size:13.5px!important;padding:13px 3px!important;gap:14px!important}
+  .summary-rows b{font-size:15px!important}
+  .summary-note,.summary-card p{font-size:12px;line-height:1.5}
+  .summary-payment-grid small,.summary-meta small{font-size:11px!important}
+  .summary-payment-grid strong,.summary-meta b{font-size:18px!important}
+  .button{height:54px!important;border-radius:15px!important;font-size:14px!important;font-weight:750!important}
+  .button.share{color:#fff;background:linear-gradient(135deg,#1c8bea,#0967cf);border:0;box-shadow:0 11px 26px rgba(0,105,210,.2)}
+  .button.share:hover{background:linear-gradient(135deg,#2698f3,#0872df);box-shadow:0 15px 32px rgba(0,105,210,.28)}
+  .breakdown summary{font-size:13px!important}.break-item{font-size:12px!important;padding:12px 0!important}
+  .source-note{font-size:10.5px!important}
+
+  .site-count-stepper{
+    display:grid;grid-template-columns:52px minmax(70px,1fr) 52px;align-items:center;
+    border:1px solid #cbd7e6;border-radius:15px;background:#fff;overflow:hidden;
+    transition:border-color .2s ease,box-shadow .2s ease;
+  }
+  .site-count-stepper:focus-within{border-color:#0877e8;box-shadow:0 0 0 4px rgba(0,113,227,.13)}
+  .site-count-stepper input{
+    width:100%!important;min-height:54px!important;padding:0!important;border:0!important;border-radius:0!important;
+    background:transparent!important;text-align:center!important;font-size:18px!important;font-weight:750!important;box-shadow:none!important;
+    appearance:textfield;-moz-appearance:textfield;
+  }
+  .site-count-stepper input::-webkit-inner-spin-button,.site-count-stepper input::-webkit-outer-spin-button{appearance:none;margin:0}
+  .site-count-button{
+    width:52px;height:54px;border:0;background:#f4f8fd;color:#076ed9;font-size:25px;font-weight:500;
+    cursor:pointer;transition:background .16s ease,transform .16s ease;
+  }
+  .site-count-button:hover{background:#e8f3ff}.site-count-button:active{transform:scale(.94)}
+
+  @media(max-width:1180px){
+    .container{width:min(100% - 28px,1120px)!important}
+    .page-grid{grid-template-columns:minmax(0,1fr) minmax(430px,.9fr)!important;gap:18px!important}
+  }
+  @media(max-width:900px){
+    body{font-size:15px!important}.container{width:min(100% - 20px,760px)!important}
+    .page-grid{grid-template-columns:1fr!important;padding:18px 0 50px!important}
+    .summary-card{position:static!important;max-height:none!important;overflow:visible!important;top:auto!important}
+    .intro-card{padding:30px 25px!important}.intro-card h1{font-size:31px!important}
+    .section-body{padding:22px 20px!important}.site-fields{padding:20px!important}
+  }
+  @media(max-width:640px){
+    .topbar{height:64px!important}.sync-pill{font-size:10px!important;padding:8px 10px!important}
+    .container{width:calc(100% - 16px)!important}
+    .page-grid{gap:14px!important;padding-top:12px!important}
+    .intro-card{padding:25px 20px!important;border-radius:22px!important}.intro-card h1{font-size:28px!important}
+    .intro-card p{font-size:14px!important}.eyebrow{font-size:10.5px!important}
+    .form-section,.summary-card{border-radius:21px!important}
+    .section-heading{padding:18px!important}.section-heading h2,.section-title{font-size:18px!important}
+    .section-body,.site-fields{padding:18px!important;gap:19px!important}
+    .field>span{font-size:13.5px!important}.field small,.field-note{font-size:11.5px!important}
+    .field input,.modern-select__button{min-height:54px!important;font-size:16px!important}
+    .site-head{padding:17px 18px!important;align-items:flex-start!important}.tariff-badge{max-width:145px;text-align:center}
+    .summary-card{padding:20px!important}.total-block{padding:25px 21px!important}.total-block strong{font-size:40px!important}
+    .summary-rows>div{font-size:13px!important}.summary-rows b{font-size:14px!important}
+    .button{height:55px!important;font-size:13.5px!important}
+  }
+</style>
+<script>
+(function enhanceSiteCount(){
+  const input=document.getElementById('siteCount');
+  if(!input||input.closest('.site-count-stepper'))return;
+  const shell=document.createElement('div');shell.className='site-count-stepper';
+  const minus=document.createElement('button');minus.type='button';minus.className='site-count-button';minus.textContent='−';minus.setAttribute('aria-label','Уменьшить количество площадок');
+  const plus=document.createElement('button');plus.type='button';plus.className='site-count-button';plus.textContent='+';plus.setAttribute('aria-label','Увеличить количество площадок');
+  input.parentNode.insertBefore(shell,input);shell.append(minus,input,plus);
+  const change=step=>{
+    const min=Number(input.min)||1,max=Number(input.max)||30;
+    input.value=Math.min(max,Math.max(min,(Number(input.value)||min)+step));
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  };
+  minus.addEventListener('click',()=>change(-1));plus.addEventListener('click',()=>change(1));
 })();
 </script>
 </body>

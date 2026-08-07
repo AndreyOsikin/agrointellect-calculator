@@ -488,6 +488,11 @@
       .intro-card{padding-right:30px}
       .intro-logo{display:none}
     }
+    @page{size:A4;margin:0}
+    @media print{
+      html,body{width:210mm!important;min-height:297mm!important;margin:0!important;background:#fff!important}
+      #pdfReport{display:block!important;position:static!important;left:auto!important;top:auto!important;width:210mm!important;min-height:297mm!important;padding:12mm!important;overflow:visible!important}
+    }
   </style>
 </head>
 <body>
@@ -625,7 +630,7 @@
       </div>
       <div class="validation-banner" id="validationBanner">Заполните обязательные поля перед формированием расчёта.</div>
       <button class="button primary" id="copyResult">Скопировать расчёт</button>
-      <button class="button secondary" id="printResult">Скачать коммерческое предложение PDF</button>
+      <button class="button secondary" id="printResult">Сохранить коммерческое предложение PDF</button>
       <button class="button ghost" id="resetResult">Сбросить расчёт</button>
       <details class="breakdown" open>
         <summary>Расшифровка стоимости <span>⌄</span></summary>
@@ -1083,23 +1088,21 @@ $('#siteCount').addEventListener('input',syncSites);document.querySelectorAll('i
 
   const filename='Коммерческое_предложение_'+($('#clientName').value||'Агроинтеллект').replace(/[^а-яА-Яa-zA-Z0-9_-]+/g,'_')+'.pdf';
   const report=$('#pdfReport');
-  const originalStyle=report.getAttribute('style');
+  const originalTitle=document.title;
   try{
-    if(typeof html2pdf==='undefined')throw new Error('PDF library unavailable');
     report.setAttribute('aria-hidden','false');
-    Object.assign(report.style,{position:'absolute',left:'0',top:'0',display:'block',visibility:'visible',opacity:'1',zIndex:'2147483647'});
     if(document.fonts?.ready)await document.fonts.ready;
     await Promise.all([...report.querySelectorAll('img')].map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=img.onerror=resolve})));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    await html2pdf().set({margin:0,filename,image:{type:'jpeg',quality:.99},html2canvas:{scale:2.2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0},jsPDF:{unit:'px',format:[794,1123],orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from(report).save();
-    toast('Коммерческое предложение сформировано');
+    document.title=filename.replace(/\.pdf$/i,'');
+    toast('В окне печати выберите «Сохранить как PDF»');
+    window.print();
   }catch(e){
     console.error(e);
-    toast('Открылось окно печати — выберите «Сохранить как PDF»');
-    window.print();
+    toast('Не удалось открыть сохранение PDF');
   }finally{
+    document.title=originalTitle;
     report.setAttribute('aria-hidden','true');
-    if(originalStyle===null)report.removeAttribute('style');else report.setAttribute('style',originalStyle);
   }
 }
 $('#printResult').onclick=downloadPdf;renderBase();syncSites();syncSupportUI();calculate();loadApi();
